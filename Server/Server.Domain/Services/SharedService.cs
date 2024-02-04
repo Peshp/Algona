@@ -1,16 +1,11 @@
-﻿using System.Net.Mail;
-
-using Microsoft.Extensions.Configuration;
-
-using Server.Common.Requests.ContactRequests;
-using Server.Domain.Interfaces;
-using static Server.Common.Constants.GlobalConstants;
-
-using System;
-using System.IO;
-using System.Net;
+﻿using System.Net;
 using System.Net.Mail;
 using System.Text;
+
+using Microsoft.Extensions.Configuration;
+using Server.Common.Constants;
+using Server.Common.Requests.ContactRequests;
+using Server.Domain.Interfaces;
 
 
 namespace Server.Domain.Services
@@ -65,10 +60,7 @@ namespace Server.Domain.Services
             client.Credentials = new NetworkCredential(mail, password);
             client.EnableSsl = true;
 
-            client.Send(mailToAdmin);
-
-
-
+            client.SendMailAsync(mailToAdmin);
 
             // Create a message and set up the recipients.
             MailMessage mailMessage = new MailMessage();
@@ -86,7 +78,7 @@ namespace Server.Domain.Services
             htmlBody += "<p>Here at <b>ALGONA</b>, we are committed to delivering excellent customer service, and your feedback is invaluable to us. We are constantly striving to improve our products, and your input plays a crucial role in this process.</p>";
             htmlBody += "<p>Thank you once again for choosing <b>ALGONA</b>. We look forward to serving you and addressing your needs promptly. If you have any further questions or concerns, please don't hesitate to reach out to us.</p>";
             htmlBody += "<h3>Best regards,<br>The ALGONA team</h3>";
-            
+
             //Encode the image to base64 string.
             string imagePath = "./Images/logo-no-background.png";
             string base64Image = ConvertImageToBase64(imagePath);
@@ -103,7 +95,7 @@ namespace Server.Domain.Services
             smtpClient.Credentials = new NetworkCredential(mail, password);
             smtpClient.EnableSsl = true;
 
-            smtpClient.Send(mailMessage);
+            smtpClient.SendMailAsync(mailMessage);
         }
 
         // Function to convert an image to base64
@@ -134,7 +126,7 @@ namespace Server.Domain.Services
             var port = int.Parse(mailSettings["Port"]);
 
             // Create a message and set up the recipients.
-            var fromAddress = new MailAddress(mail,displayName );
+            var fromAddress = new MailAddress(mail, displayName);
             var toAddress = new MailAddress(toEmail);
             const string subject = "Password Reset";
             var body = $"Click the following link to reset your password: {GetResetPasswordLink(resetToken)}";
@@ -156,9 +148,80 @@ namespace Server.Domain.Services
             }
         }
 
+        public async Task SendStatusRequestEmail(string toEmail, string requestForTransportOrSpedition, string status, string name)
+        {
+            /*
+             //add this to user secrets
+               "MailSettings": {
+               "Mail": "someEmail@gmail.com",
+               "DisplayName": "Some name",
+               "Password": "somePassword",
+               "Host": "smtp.gmail.com",
+               "Port": 587
+             */
+            var mailSettings = this.configuration.GetSection("MailSettings");
+            var mail = mailSettings["Mail"];
+            var displayName = mailSettings["DisplayName"];
+            var password = mailSettings["Password"];
+            var host = mailSettings["Host"];
+            var port = int.Parse(mailSettings["Port"]);
+
+
+            // Create a message and set up the recipients.
+            MailMessage mailMessage = new MailMessage();
+            mailMessage.From = new MailAddress(mail, displayName);
+            mailMessage.To.Add(toEmail);
+            mailMessage.Subject = "ALGONA - " + requestForTransportOrSpedition;
+
+            string message = "";
+            if (status == EntityValidationConstants.Spedition.StatusApproved)
+            {
+                message = "<p>We are pleased to inform you that your " + requestForTransportOrSpedition + " has been approved.</p>";
+            }
+            else if (status == EntityValidationConstants.Spedition.StatusRejected)
+            {
+                message = "<p>We are sorry to inform you that your " + requestForTransportOrSpedition + " has been rejected.</p>";
+            }
+            else
+            {
+                message = "<p>We are excited to inform you that your " + requestForTransportOrSpedition + " has been completed.</p>";
+            }
+
+            //Set the html message body.
+            string htmlBody = "<html><body>";
+            htmlBody += "<h3>Dear ";
+            htmlBody += name;
+            htmlBody += ",</h3>";
+            htmlBody += message;
+            htmlBody += "<p>Thank you for choosing <b>ALGONA</b>. We look forward to serving you and addressing your needs promptly. If you have any further questions or concerns, please don't hesitate to reach out to us.</p>";
+            htmlBody += "<h3>Best regards,<br>The ALGONA team</h3>";
+
+            //Encode the image to base64 string.
+            string imagePath = "./Images/logo-no-background.png";
+            string base64Image = ConvertImageToBase64(imagePath);
+
+            //Add the image to the html body.
+            htmlBody += $"<img src='data:image/jpeg;base64,{base64Image}' alt='algona-logo' border=\"0\" style=\"width: 200px; height: auto; margin: 0 auto; display: block;\">";
+            htmlBody += "</body></html>";
+
+            mailMessage.Body = htmlBody;
+            mailMessage.IsBodyHtml = true;
+
+            // Set up the SMTP client and send the email
+            SmtpClient smtpClient = new SmtpClient(host, port);
+            smtpClient.Credentials = new NetworkCredential(mail, password);
+            smtpClient.EnableSsl = true;
+
+            smtpClient.Send(mailMessage);
+        }
+
         private static string GetResetPasswordLink(string resetToken)
         {
             return $"https://algona.ltd/auth/resetPassword?token={resetToken}";
         }
+
+
+
+
     }
 }

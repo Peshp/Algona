@@ -11,6 +11,10 @@ import { ResetPasswordComponent } from './reset-password/reset-password.componen
 import { HttpClientModule, HttpClient } from '@angular/common/http';
 import {TranslateLoader, TranslateModule} from '@ngx-translate/core';
 import {TranslateHttpLoader} from '@ngx-translate/http-loader';
+import { AdminComponent } from './admin/admin.component';
+import { AdminRequestPageComponent } from './admin-request-page/admin-request-page.component';
+import { SpeditionReqTableComponent } from './spedition-req-table/spedition-req-table.component';
+import { TransportReqTableComponent } from './transport-req-table/transport-req-table.component';
 
 
 export function HttpLoaderFactory(http: HttpClient) {
@@ -23,7 +27,11 @@ export function HttpLoaderFactory(http: HttpClient) {
         LoginComponent,
         RegisterComponent,
         ForgotPasswordComponent,
-        ResetPasswordComponent
+        ResetPasswordComponent,
+        AdminComponent,
+        AdminRequestPageComponent,
+        SpeditionReqTableComponent,
+        TransportReqTableComponent
     ],
     imports: [
         CommonModule,
@@ -39,6 +47,6 @@ export function HttpLoaderFactory(http: HttpClient) {
               deps: [HttpClient]
             }
           })
-    ]
+    ],
 })
 export class AuthModule { }

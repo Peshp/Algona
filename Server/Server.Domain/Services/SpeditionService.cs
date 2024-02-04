@@ -1,4 +1,5 @@
-﻿using Server.Common.Requests.SpeditionRequest;
+﻿using Server.Common.Constants;
+using Server.Common.Requests.SpeditionRequest;
 using Server.Data.Entities;
 using Server.Data.Interfaces;
 using Server.Domain.Interfaces;
@@ -46,9 +47,10 @@ namespace Server.Domain.Services
         /// <summary>
         /// Gets all requests for spedition
         /// </summary>
-        public Task<IEnumerable<Spedition>> GetAll()
+        public async Task<IEnumerable<Spedition>> GetAll()
         {
-            throw new NotImplementedException();
+            var requests = await unitOfWork.Speditions.GetAllAsync();
+            return requests;
         }
 
         /// <summary>
@@ -65,5 +67,38 @@ namespace Server.Domain.Services
             }
             return request;
         }
+
+
+        /// <summary>
+        /// Updates the status of the request
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="status"></param>
+        /// <returns></returns>
+        public async Task<Spedition?> UpdateStatus(string id, string status)
+        {
+            var requestTransport = await GetById(id);
+            if (requestTransport == null)
+            {
+                return null;
+            }
+
+            if (status == EntityValidationConstants.Spedition.StatusApproved)
+            {
+                requestTransport.Status = EntityValidationConstants.Spedition.StatusApproved;
+            }
+            else if (status == EntityValidationConstants.Spedition.StatusRejected)
+            {
+                requestTransport.Status = EntityValidationConstants.Spedition.StatusRejected;
+            }
+            else
+            {
+                requestTransport.Status = EntityValidationConstants.Spedition.StatusComplete;
+            }
+
+            await unitOfWork.CommitAsync();
+            return requestTransport;
+        }
+
     }
 }
